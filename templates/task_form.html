@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Task — {{ site_settings.site_title|default:"Discipline Tracker" }}{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+  <h1 class="page-title">{{ action }} Task</h1>
+  <a href="{% url 'manage_tasks' %}" class="btn-back">← Back to Tasks</a>
+</section>
+
+<section class="form-section">
+  <form method="post" class="task-form" id="task-form">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label class="form-label" for="id_title">{{ form.title.label }}</label>
+      {{ form.title }}
+      {% if form.title.errors %}
+        <span class="form-error">{{ form.title.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="id_description">{{ form.description.label }}</label>
+      {{ form.description }}
+      {% if form.description.errors %}
+        <span class="form-error">{{ form.description.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="id_task_type">{{ form.task_type.label }}</label>
+        {{ form.task_type }}
+        {% if form.task_type.errors %}
+          <span class="form-error">{{ form.task_type.errors.0 }}</span>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_time_slot">{{ form.time_slot.label }}</label>
+        {{ form.time_slot }}
+        {% if form.time_slot.errors %}
+          <span class="form-error">{{ form.time_slot.errors.0 }}</span>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_order">{{ form.order.label }}</label>
+        {{ form.order }}
+        {% if form.order.errors %}
+          <span class="form-error">{{ form.order.errors.0 }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Dynamic Weekday Field (shown only when task_type == 'weekday') -->
+    <div class="form-group" id="weekday-group" style="display: none;">
+      <label class="form-label" for="id_weekday">{{ form.weekday.label }}</label>
+      {{ form.weekday }}
+      {% if form.weekday.errors %}
+        <span class="form-error">{{ form.weekday.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Dynamic Particular Dates Field (shown only when task_type == 'date') -->
+    <div class="form-group" id="dates-group" style="display: none;">
+      <label class="form-label" for="id_dates">{{ form.dates.label }}</label>
+      {{ form.dates }}
+      <small style="display:block; margin-top:4px; color:var(--clr-text-muted); font-size:0.8rem;">
+        Format: DD/MM/YYYY, separated by commas (e.g. 05/09/2026, 12/09/2026, 20/09/2026)
+      </small>
+      {% if form.dates.errors %}
+        <span class="form-error">{{ form.dates.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <div class="form-check-group">
+      {{ form.is_active }}
+      <label class="form-check-label" for="id_is_active">{{ form.is_active.label }}</label>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary btn-submit" id="submit-btn">
+        {% if action == "Add" %}Create Task{% else %}Save Changes{% endif %}
+      </button>
+      <a href="{% url 'manage_tasks' %}" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function() {
+    const taskTypeSelect = document.getElementById("id_task_type");
+    const weekdayGroup = document.getElementById("weekday-group");
+    const datesGroup = document.getElementById("dates-group");
+
+    function updateDynamicFields() {
+      if (!taskTypeSelect) return;
+      const val = taskTypeSelect.value;
+      if (val === "weekday") {
+        if (weekdayGroup) weekdayGroup.style.display = "block";
+        if (datesGroup) datesGroup.style.display = "none";
+      } else if (val === "date") {
+        if (datesGroup) datesGroup.style.display = "block";
+        if (weekdayGroup) weekdayGroup.style.display = "none";
+      } else {
+        if (weekdayGroup) weekdayGroup.style.display = "none";
+        if (datesGroup) datesGroup.style.display = "none";
+      }
+    }
+
+    if (taskTypeSelect) {
+      taskTypeSelect.addEventListener("change", updateDynamicFields);
+      updateDynamicFields();
+    }
+  })();
+</script>
+{% endblock %}
+

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}History — {{ site_settings.site_title|default:"Discipline Tracker" }}{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+  <h1 class="page-title">Task History</h1>
+  <p class="page-subtitle">Your consistency over the last 60 days</p>
+</section>
+
+<section class="history-section">
+  {% if history %}
+  <div class="history-list">
+    {% for entry in history %}
+    <div class="history-card {% if entry.pct == 100 %}history-card--perfect{% endif %}">
+      <div class="history-date">
+        <span class="history-day">{{ entry.date|date:"D" }}</span>
+        <span class="history-full-date">{{ entry.date|date:"j M Y" }}</span>
+      </div>
+      <div class="history-progress">
+        <div class="history-bar-track">
+          <div class="history-bar-fill" style="width: {{ entry.pct }}%;"></div>
+        </div>
+        <span class="history-count">
+          {{ entry.completed }}/{{ entry.total }}
+          {% if entry.pct == 100 %}✅{% endif %}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📅</div>
+    <p>No history yet. Start completing tasks today!</p>
+    <a href="{% url 'home' %}" class="btn-primary">Go to Today</a>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}
+

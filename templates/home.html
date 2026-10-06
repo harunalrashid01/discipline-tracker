@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Today — {{ site_settings.site_title|default:"Discipline Tracker" }}{% endblock %}
+
+{% block content %}
+
+<!-- ════════════════════════════════════════════════════
+     COUNTDOWN SECTION
+════════════════════════════════════════════════════ -->
+{% if countdowns %}
+<section class="countdown-section" aria-label="Countdown to goal">
+  {% for countdown_item in countdowns %}
+  <div class="countdown-card" {% if not forloop.first %}style="margin-top: 1rem;"{% endif %}>
+    <p class="countdown-label">{{ countdown_item.title }}</p>
+
+    {% if countdown_item.status == "countdown" %}
+      <div class="countdown-number">{{ countdown_item.days_remaining }}</div>
+      {% if countdown_item.subtitle %}
+        <p class="countdown-sublabel">{{ countdown_item.subtitle }}</p>
+      {% endif %}
+    {% elif countdown_item.status == "today" %}
+      <div class="countdown-number arrived">0</div>
+      <p class="countdown-sublabel arrived-text">{{ site_settings.today_is_day_text }}</p>
+      {% if countdown_item.subtitle %}
+        <p class="countdown-sublabel" style="margin-top: 0.5rem;">{{ countdown_item.subtitle }}</p>
+      {% endif %}
+    {% else %}
+      <div class="countdown-number arrived">✓</div>
+      <p class="countdown-sublabel arrived-text">{{ site_settings.day_arrived_text }}</p>
+      {% if countdown_item.subtitle %}
+        <p class="countdown-sublabel" style="margin-top: 0.5rem;">{{ countdown_item.subtitle }}</p>
+      {% endif %}
+    {% endif %}
+
+    {% if forloop.first %}
+    <!-- Day type badge -->
+    <div class="day-badge day-badge--{{ day_type }}">
+      {{ today|date:"l, F j, Y" }} &nbsp;·&nbsp; {{ day_label }}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+{% else %}
+<section class="countdown-section" aria-label="Today">
+  <div class="countdown-card">
+    <!-- Day type badge -->
+    <div class="day-badge day-badge--{{ day_type }}">
+      {{ today|date:"l, F j, Y" }} &nbsp;·&nbsp; {{ day_label }}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+
+<!-- ════════════════════════════════════════════════════
+     MOTIVATIONAL SECTION
+════════════════════════════════════════════════════ -->
+{% if quotes or goals %}
+<section class="motivation-section" aria-label="Motivation">
+  {% for quote_item in quotes %}
+  <blockquote class="motivation-quote">
+    "{{ quote_item.quote }}"
+  </blockquote>
+  {% endfor %}
+
+  {% if goals %}
+  <div class="goals-grid">
+    {% for goal_item in goals %}
+    <div class="goal-card">
+      {% if goal_item.icon %}<span class="goal-icon">{{ goal_item.icon }}</span>{% endif %}
+      <p>
+        <strong>{{ goal_item.title }}</strong>
+        {% if goal_item.description %}<br><span class="goal-desc">{{ goal_item.description }}</span>{% endif %}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+
+<!-- ════════════════════════════════════════════════════
+     RESOURCE / DOC LINK SECTION
+════════════════════════════════════════════════════ -->
+{% if site_settings.doc_url %}
+<section class="resource-section" aria-label="Document Link">
+  <a href="{{ site_settings.doc_url }}" target="_blank" rel="noopener noreferrer" class="btn-resource-doc">
+    <span class="resource-doc-icon">📄</span>
+    <span class="resource-doc-text">{{ site_settings.doc_button_text|default:"Open Important Notes / Guide" }}</span>
+    <span class="resource-doc-arrow">↗</span>
+  </a>
+</section>
+{% endif %}
+
+
+<!-- ════════════════════════════════════════════════════
+     PROGRESS BAR
+════════════════════════════════════════════════════ -->
+<section class="progress-section" aria-label="Today's progress">
+  <div class="progress-header">
+    <span class="progress-label">{{ site_settings.progress_label }}</span>
+    <span class="progress-count" id="progress-count">
+      {{ done_count }} / {{ total }} completed
+    </span>
+  </div>
+  <div class="progress-bar-track" role="progressbar" aria-valuenow="{{ progress_pct }}" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-bar-fill" id="progress-bar-fill" style="width: {{ progress_pct }}%;"></div>
+  </div>
+  {% if streak > 0 %}
+  <div class="streak-badge">🔥 {{ streak }} {{ site_settings.streak_label }}</div>
+  {% endif %}
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     TIME-SLOT SECTION TABS
+════════════════════════════════════════════════════ -->
+<section class="time-tabs-section" aria-label="Task Time Sections">
+  <div class="time-tabs-bar" role="tablist">
+    <button type="button" class="time-tab-btn active" id="tab-btn-current" data-slot="current" onclick="filterBySlot('current', this)">
+      <span class="tab-icon">{{ current_slot_icon }}</span> <span>{{ current_time_slot_label }}</span> <span class="badge-now">ACTIVE NOW</span>
+    </button>
+    <button type="button" class="time-tab-btn tab-all-tasks" id="tab-btn-all" data-slot="all" onclick="filterBySlot('all', this)">
+      <span class="tab-icon">📋</span> <span>All Tasks (All Sections)</span>
+    </button>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     TASK BOOK / NOTEBOOK SECTION
+════════════════════════════════════════════════════ -->
+<section class="book-section" aria-label="Daily tasks">
+
+  <!-- ── Pending Tasks ───────────────────────────── -->
+  {% if pending_tasks %}
+  <div class="tasks-group" id="pending-group">
+    <h2 class="tasks-group-heading pending-heading">
+      <span class="heading-dot dot-pending"></span>
+      PENDING TASKS
+    </h2>
+    <div class="task-list" id="pending-list">
+      {% for task in pending_tasks %}
+      <div class="task-card task-card--pending"
+           id="task-card-{{ task.id }}"
+           data-task-id="{{ task.id }}"
+           data-time-slot="{{ task.time_slot }}">
+        <div class="task-card-inner">
+          <div class="task-number">{{ task.order }}</div>
+          <div class="task-body">
+            <div class="task-title-wrap">
+              <h3 class="task-title">{{ task.title }}</h3>
+              <span class="task-slot-tag task-slot-tag--{{ task.time_slot }}" title="{{ task.get_time_slot_display }}">
+                {{ task.get_time_slot_icon }} {{ task.get_time_slot_short_label }}
+              </span>
+              {% if task.category %}
+              <span class="task-category-tag" style="background:{{ task.category.color }};" title="Category: {{ task.category.name }}">
+                {{ task.category.icon }} {{ task.category.name }}
+              </span>
+              {% endif %}
+            </div>
+            {% if task.description %}
+            <p class="task-desc">{{ task.description }}</p>
+            {% endif %}
+          </div>
+          <button class="btn-done"
+                  id="done-btn-{{ task.id }}"
+                  onclick="completeTask({{ task.id }})"
+                  aria-label="Mark task {{ task.order }} as done">
+            ✓ Done
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+
+  <!-- ── Completed Tasks ─────────────────────────── -->
+  {% if completed_tasks %}
+  <div class="tasks-group" id="completed-group">
+    <h2 class="tasks-group-heading completed-heading">
+      <span class="heading-dot dot-completed"></span>
+      COMPLETED TASKS
+    </h2>
+    <div class="task-list" id="completed-list">
+      {% for task in completed_tasks %}
+      <div class="task-card task-card--completed"
+           id="task-card-{{ task.id }}"
+           data-task-id="{{ task.id }}"
+           data-time-slot="{{ task.time_slot }}">
+        <div class="task-card-inner">
+          <div class="task-number completed-num">{{ task.order }}</div>
+          <div class="task-body">
+            <div class="task-title-wrap">
+              <h3 class="task-title task-title--done">{{ task.title }}</h3>
+              <span class="task-slot-tag task-slot-tag--{{ task.time_slot }}" title="{{ task.get_time_slot_display }}">
+                {{ task.get_time_slot_icon }} {{ task.get_time_slot_short_label }}
+              </span>
+              {% if task.category %}
+              <span class="task-category-tag" style="background:{{ task.category.color }};" title="Category: {{ task.category.name }}">
+                {{ task.category.icon }} {{ task.category.name }}
+              </span>
+              {% endif %}
+            </div>
+            {% if task.description %}
+            <p class="task-desc task-desc--done">{{ task.description }}</p>
+            {% endif %}
+          </div>
+          <button class="btn-undo"
+                  id="undo-btn-{{ task.id }}"
+                  onclick="undoTask({{ task.id }})"
+                  aria-label="Undo task {{ task.order }}">
+            ↩ Undo
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+
+  <!-- Slot specific empty state (when filter has no tasks) -->
+  <div class="empty-state empty-slot-state" id="empty-slot-state" style="display: none;">
+    <div class="empty-icon">☕</div>
+    <p id="empty-slot-msg">No tasks scheduled for this section.</p>
+    <button type="button" class="btn-secondary" onclick="filterBySlot('all', document.getElementById('tab-btn-all'))" style="margin-top: 0.5rem;">
+      View All Tasks
+    </button>
+  </div>
+
+  <!-- Overall empty state -->
+  {% if not pending_tasks and not completed_tasks %}
+  <div class="empty-state" id="overall-empty-state">
+    <div class="empty-icon">📋</div>
+    <p>{{ site_settings.no_tasks_text }}</p>
+    <a href="{% url 'add_task' %}" class="btn-primary">{{ site_settings.add_task_btn_text }}</a>
+  </div>
+  {% endif %}
+
+  <!-- All done celebration -->
+  {% if not pending_tasks and completed_tasks %}
+  <div class="all-done-banner" id="all-done-banner">
+    <div class="all-done-icon">🎉</div>
+    <p class="all-done-text">{{ site_settings.all_done_text }}</p>
+  </div>
+  {% endif %}
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     FINAL COUNTDOWN SECTION (BOTTOM MINI CARD)
+════════════════════════════════════════════════════ -->
+{% if final_countdowns %}
+  {% for f_item in final_countdowns %}
+  <section class="final-countdown-section" aria-label="Final Countdown">
+    <div class="final-countdown-card">
+      <div class="final-countdown-left">
+        <span class="final-countdown-badge">🏁 {{ f_item.title }}</span>
+        {% if f_item.subtitle %}
+        <p class="final-countdown-sub">{{ f_item.subtitle }}</p>
+        {% endif %}
+        <span class="final-countdown-target">Target: {{ f_item.target_date|date:"F j, Y" }}</span>
+      </div>
+      <div class="final-countdown-right">
+        {% if f_item.status == "countdown" %}
+          <div class="final-countdown-num">{{ f_item.days_remaining }}</div>
+          <span class="final-countdown-unit">DAYS LEFT</span>
+        {% elif f_item.status == "today" %}
+          <div class="final-countdown-num arrived">0</div>
+          <span class="final-countdown-unit arrived">TODAY!</span>
+        {% else %}
+          <div class="final-countdown-num arrived">✓</div>
+          <span class="final-countdown-unit arrived">ARRIVED</span>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endfor %}
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  // Pass CSRF token, URLs, and current active slot to JS
+  window.CSRF_TOKEN = "{{ csrf_token }}";
+  window.COMPLETE_URL = "{% url 'complete_task' 0 %}".replace("/0/", "/{id}/");
+  window.UNDO_URL = "{% url 'undo_task' 0 %}".replace("/0/", "/{id}/");
+  window.CURRENT_TIME_SLOT = "{{ current_time_slot|default:'morning' }}";
+</script>
+{% endblock %}
+

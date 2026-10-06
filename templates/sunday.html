@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Sunday — Rest Day — {{ site_settings.site_title|default:"Discipline Tracker" }}{% endblock %}
+
+{% block content %}
+
+<!-- Countdown still shows on Sunday -->
+{% if countdowns %}
+<section class="countdown-section">
+  {% for countdown_item in countdowns %}
+  <div class="countdown-card" {% if not forloop.first %}style="margin-top: 1rem;"{% endif %}>
+    <p class="countdown-label">{{ countdown_item.title }}</p>
+    {% if countdown_item.status == "countdown" %}
+      <div class="countdown-number">{{ countdown_item.days_remaining }}</div>
+      {% if countdown_item.subtitle %}
+        <p class="countdown-sublabel">{{ countdown_item.subtitle }}</p>
+      {% endif %}
+    {% elif countdown_item.status == "today" %}
+      <div class="countdown-number arrived">0</div>
+      <p class="countdown-sublabel arrived-text">{{ site_settings.today_is_day_text }}</p>
+    {% else %}
+      <div class="countdown-number arrived">✓</div>
+      <p class="countdown-sublabel arrived-text">{{ site_settings.day_arrived_text }}</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<!-- Sunday / Holiday Screen -->
+<section class="sunday-section">
+  <div class="sunday-card">
+    <div class="sunday-icon">☀️</div>
+    <h1 class="sunday-title">{{ site_settings.sunday_title }}</h1>
+    <p class="sunday-subtitle">{{ site_settings.sunday_subtitle }}</p>
+    <div class="sunday-divider"></div>
+    <blockquote class="sunday-quote">
+      "{{ site_settings.sunday_quote }}"
+    </blockquote>
+    <p class="sunday-note">
+      {{ site_settings.sunday_note|linebreaksbr }}
+    </p>
+    {% if streak > 0 %}
+    <div class="streak-badge" style="margin-top:1.5rem;">🔥 {{ streak }} {{ site_settings.streak_label }}</div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Motivation still shows -->
+{% if quotes %}
+<section class="motivation-section">
+  {% for quote_item in quotes %}
+  <blockquote class="motivation-quote">
+    "{{ quote_item.quote }}"
+  </blockquote>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% endblock %}
+
