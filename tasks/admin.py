@@ -16,11 +16,11 @@ from .models import (
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ["order", "color_badge", "name", "icon", "task_count", "is_active"]
+    list_display = ["order", "color_badge", "name", "icon", "target_date", "task_count", "is_active"]
     list_display_links = ["name"]
     list_editable = ["order", "is_active"]
     list_filter = ["is_active"]
-    search_fields = ["name"]
+    search_fields = ["name", "countdown_title", "quote"]
     ordering = ["order", "name"]
 
     fieldsets = (
@@ -31,6 +31,14 @@ class CategoryAdmin(admin.ModelAdmin):
                 "Set <b>is_active = False</b> to soft-delete a category "
                 "(it will be hidden from the task form but not removed from the database)."
             ),
+        }),
+        ("Category Timer / Countdown", {
+            "fields": ("countdown_title", "target_date", "countdown_subtitle"),
+            "description": "Optional: custom countdown timer displayed when this category is active on the home page.",
+        }),
+        ("Category Motivational Quote", {
+            "fields": ("quote",),
+            "description": "Optional: quote displayed when this category is active on the home page.",
         }),
     )
 
@@ -147,10 +155,10 @@ class TaskCompletionAdmin(admin.ModelAdmin):
 
 @admin.register(Countdown)
 class CountdownAdmin(admin.ModelAdmin):
-    list_display = ["order", "title", "target_date", "is_final", "subtitle", "is_active"]
+    list_display = ["order", "title", "category", "target_date", "is_final", "subtitle", "is_active"]
     list_display_links = ["title"]
     list_editable = ["order", "is_active", "is_final"]
-    list_filter = ["is_active", "is_final", "target_date"]
+    list_filter = ["category", "is_active", "is_final", "target_date"]
     search_fields = ["title", "subtitle"]
     ordering = ["order", "target_date"]
 
@@ -159,10 +167,10 @@ class CountdownAdmin(admin.ModelAdmin):
 
 @admin.register(MotivationQuote)
 class MotivationQuoteAdmin(admin.ModelAdmin):
-    list_display = ["order", "quote_preview", "is_active"]
+    list_display = ["order", "category", "quote_preview", "is_active"]
     list_display_links = ["quote_preview"]
     list_editable = ["order", "is_active"]
-    list_filter = ["is_active"]
+    list_filter = ["category", "is_active"]
     search_fields = ["quote"]
     ordering = ["order", "id"]
 

@@ -13,6 +13,10 @@
   <form method="post" class="task-form">
     {% csrf_token %}
 
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--clr-accent); margin-bottom: 0.75rem;">
+      📁 Category Identity
+    </h3>
+
     <div class="form-row">
       <div class="form-group" style="flex: 2;">
         <label class="form-label" for="id_name">{{ form.name.label }}</label>
@@ -31,7 +35,7 @@
         <label class="form-label" for="id_color">{{ form.color.label }}</label>
         {{ form.color }}
         {% if form.color.errors %}<span class="form-error">{{ form.color.errors.0 }}</span>{% endif %}
-        <small style="color: var(--clr-text-muted); font-size: 0.8rem;">Click to pick a color for the badge</small>
+        <small style="color: var(--clr-text-muted); font-size: 0.8rem;">Click to pick a color for this category</small>
       </div>
       <div class="form-group">
         <label class="form-label" for="id_order">{{ form.order.label }}</label>
@@ -40,7 +44,50 @@
       </div>
     </div>
 
-    <div class="form-check-group">
+    <hr style="border: none; border-top: 1px solid var(--clr-border); margin: 1.5rem 0;">
+
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--clr-gold); margin-bottom: 0.75rem;">
+      ⏱️ Category Timer / Countdown (Optional)
+    </h3>
+    <p style="color: var(--clr-text-muted); font-size: 0.8rem; margin-bottom: 1rem;">
+      When this category is selected on the home page, this countdown timer will be displayed.
+    </p>
+
+    <div class="form-row">
+      <div class="form-group" style="flex: 1.5;">
+        <label class="form-label" for="id_countdown_title">{{ form.countdown_title.label }}</label>
+        {{ form.countdown_title }}
+        {% if form.countdown_title.errors %}<span class="form-error">{{ form.countdown_title.errors.0 }}</span>{% endif %}
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <label class="form-label" for="id_target_date">{{ form.target_date.label }}</label>
+        {{ form.target_date }}
+        {% if form.target_date.errors %}<span class="form-error">{{ form.target_date.errors.0 }}</span>{% endif %}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="id_countdown_subtitle">{{ form.countdown_subtitle.label }}</label>
+      {{ form.countdown_subtitle }}
+      {% if form.countdown_subtitle.errors %}<span class="form-error">{{ form.countdown_subtitle.errors.0 }}</span>{% endif %}
+    </div>
+
+    <hr style="border: none; border-top: 1px solid var(--clr-border); margin: 1.5rem 0;">
+
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--clr-blue); margin-bottom: 0.75rem;">
+      💬 Category Motivational Quote (Optional)
+    </h3>
+    <p style="color: var(--clr-text-muted); font-size: 0.8rem; margin-bottom: 1rem;">
+      Displays when this category is active on the home page.
+    </p>
+
+    <div class="form-group">
+      <label class="form-label" for="id_quote">{{ form.quote.label }}</label>
+      {{ form.quote }}
+      {% if form.quote.errors %}<span class="form-error">{{ form.quote.errors.0 }}</span>{% endif %}
+    </div>
+
+    <div class="form-check-group" style="margin-top: 1.25rem;">
       {{ form.is_active }}
       <label class="form-check-label" for="id_is_active">{{ form.is_active.label }}</label>
     </div>

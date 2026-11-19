@@ -192,13 +192,51 @@ def home(request):
         site_settings.save(update_fields=["active_category"])
         selected_category = None
 
-    active_countdowns = Countdown.objects.filter(is_active=True).order_by("order", "target_date")
-    all_countdowns = [c.get_countdown_info(today) for c in active_countdowns]
-    countdowns = [c for c in all_countdowns if not c.get("is_final")]
-    final_countdowns = [c for c in all_countdowns if c.get("is_final")]
+    # ── Category-specific Timer & Quote ──────────────────────────
+    if selected_category:
+        cat_countdowns = []
+        if selected_category.target_date:
+            cat_countdowns.append(selected_category.get_countdown_info(today))
+
+        cat_linked = Countdown.objects.filter(category=selected_category, is_active=True).order_by("order", "target_date")
+        for c in cat_linked:
+            cat_countdowns.append(c.get_countdown_info(today))
+
+        if cat_countdowns:
+            countdowns = [c for c in cat_countdowns if not c.get("is_final")]
+            final_countdowns = [c for c in cat_countdowns if c.get("is_final")]
+        else:
+            active_countdowns = Countdown.objects.filter(is_active=True, category__isnull=True).order_by("order", "target_date")
+            all_countdowns = [c.get_countdown_info(today) for c in active_countdowns]
+            countdowns = [c for c in all_countdowns if not c.get("is_final")]
+            final_countdowns = [c for c in all_countdowns if c.get("is_final")]
+
+        cat_quotes = []
+        if selected_category.quote and selected_category.quote.strip():
+            cat_quotes.append({"quote": selected_category.quote.strip()})
+
+        cat_linked_quotes = MotivationQuote.objects.filter(category=selected_category, is_active=True).order_by("order", "id")
+        for q in cat_linked_quotes:
+            cat_quotes.append({"quote": q.quote})
+
+        if cat_quotes:
+            quotes = cat_quotes
+        else:
+            quotes = MotivationQuote.objects.filter(is_active=True, category__isnull=True).order_by("order", "id")
+    else:
+        active_countdowns = Countdown.objects.filter(is_active=True, category__isnull=True).order_by("order", "target_date")
+        if not active_countdowns.exists():
+            active_countdowns = Countdown.objects.filter(is_active=True).order_by("order", "target_date")
+        all_countdowns = [c.get_countdown_info(today) for c in active_countdowns]
+        countdowns = [c for c in all_countdowns if not c.get("is_final")]
+        final_countdowns = [c for c in all_countdowns if c.get("is_final")]
+
+        quotes = MotivationQuote.objects.filter(is_active=True, category__isnull=True).order_by("order", "id")
+        if not quotes.exists():
+            quotes = MotivationQuote.objects.filter(is_active=True).order_by("order", "id")
+
     countdown = countdowns[0] if countdowns else None
 
-    quotes = MotivationQuote.objects.filter(is_active=True).order_by("order", "id")
     goals = Goal.objects.filter(is_active=True).order_by("order", "id")
     streak = get_streak()
 

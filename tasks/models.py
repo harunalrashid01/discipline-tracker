@@ -21,6 +21,26 @@ class Category(models.Model):
         default=True,
         help_text="Inactive categories are hidden from task forms (soft delete)",
     )
+    # Per-category timer and quote
+    target_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Target date / timer for this category",
+    )
+    countdown_title = models.CharField(
+        max_length=255,
+        blank=True,
+        default="DAYS REMAINING",
+        help_text="Title for the category timer (e.g. FIT BY SUMMER, EXAM GOAL)",
+    )
+    countdown_subtitle = models.TextField(
+        blank=True,
+        help_text="Subtitle or goal description for this category timer",
+    )
+    quote = models.TextField(
+        blank=True,
+        help_text="Motivational quote specific to this category",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -30,6 +50,32 @@ class Category(models.Model):
 
     def __str__(self):
         return f"{self.icon} {self.name}" if self.icon else self.name
+
+    def get_countdown_info(self, today=None):
+        if not self.target_date:
+            return None
+        if today is None:
+            today = timezone.localdate()
+        delta = (self.target_date - today).days
+        if delta > 0:
+            status = "countdown"
+        elif delta == 0:
+            status = "today"
+        else:
+            status = "passed"
+
+        return {
+            "id": f"cat_{self.id}",
+            "title": self.countdown_title or f"{self.name.upper()} TARGET",
+            "subtitle": self.countdown_subtitle,
+            "target_date": self.target_date,
+            "days_remaining": max(delta, 0),
+            "raw_days": delta,
+            "status": status,
+            "is_final": False,
+            "category_badge": f"{self.icon} {self.name}",
+            "category_color": self.color,
+        }
 
 
 class Task(models.Model):
@@ -262,6 +308,14 @@ class Countdown(models.Model):
     is_active = models.BooleanField(default=True)
     is_final = models.BooleanField(default=False, help_text="Display as a small Final Countdown card at the bottom of the page")
     order = models.PositiveIntegerField(default=1)
+    category = models.ForeignKey(
+        Category,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="countdowns",
+        help_text="Optional category this countdown belongs to (leave empty for general)",
+    )
 
     class Meta:
         ordering = ["order", "target_date"]
@@ -269,7 +323,8 @@ class Countdown(models.Model):
         verbose_name_plural = "Countdowns"
 
     def __str__(self):
-        return f"{self.title} ({self.target_date})"
+        cat_str = f" [{self.category.name}]" if self.category else ""
+        return f"{self.title}{cat_str} ({self.target_date})"
 
     def get_countdown_info(self, today=None):
         if today is None:
@@ -291,6 +346,8 @@ class Countdown(models.Model):
             "raw_days": delta,
             "status": status,
             "is_final": self.is_final,
+            "category_badge": f"{self.category.icon} {self.category.name}" if self.category else "",
+            "category_color": self.category.color if self.category else "",
         }
 
 
@@ -302,6 +359,14 @@ class MotivationQuote(models.Model):
     quote = models.TextField()
     is_active = models.BooleanField(default=True)
     order = models.PositiveIntegerField(default=1)
+    category = models.ForeignKey(
+        Category,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="quotes",
+        help_text="Optional category this quote belongs to (leave empty for general)",
+    )
 
     class Meta:
         ordering = ["order", "id"]

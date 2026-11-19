@@ -12,6 +12,13 @@
 <section class="countdown-section" aria-label="Countdown to goal">
   {% for countdown_item in countdowns %}
   <div class="countdown-card" {% if not forloop.first %}style="margin-top: 1rem;"{% endif %}>
+    {% if countdown_item.category_badge %}
+    <div style="margin-bottom: 0.35rem;">
+      <span class="task-cat-pill" style="background: {{ countdown_item.category_color }}22; color: {{ countdown_item.category_color }}; border-color: {{ countdown_item.category_color }}50;">
+        {{ countdown_item.category_badge }}
+      </span>
+    </div>
+    {% endif %}
     <p class="countdown-label">{{ countdown_item.title }}</p>
     {% if countdown_item.status == "countdown" %}
       <div class="countdown-number">{{ countdown_item.days_remaining }}</div>

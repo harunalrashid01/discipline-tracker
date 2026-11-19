@@ -20,7 +20,11 @@
         <span class="category-color-dot" style="background: {{ cat.color }};"></span>
         <div class="manage-info">
           <p class="manage-title">{{ cat.icon }} {{ cat.name }}</p>
-          <p class="manage-desc">{{ cat.tasks.count }} task{{ cat.tasks.count|pluralize }} · Order: {{ cat.order }}</p>
+          <p class="manage-desc">
+            {{ cat.tasks.count }} task{{ cat.tasks.count|pluralize }} · Order: {{ cat.order }}
+            {% if cat.target_date %}· ⏱️ Target: {{ cat.target_date|date:"M j, Y" }}{% endif %}
+            {% if cat.quote %}· 💬 Quote configured{% endif %}
+          </p>
         </div>
       </div>
       <div class="manage-actions">

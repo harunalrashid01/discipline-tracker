@@ -7,7 +7,17 @@ from .models import Category, Task, TaskDateAssignment
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ["name", "icon", "color", "order", "is_active"]
+        fields = [
+            "name",
+            "icon",
+            "color",
+            "order",
+            "countdown_title",
+            "target_date",
+            "countdown_subtitle",
+            "quote",
+            "is_active",
+        ]
         widgets = {
             "name": forms.TextInput(attrs={
                 "class": "form-input",
@@ -22,6 +32,23 @@ class CategoryForm(forms.ModelForm):
                 "type": "color",
             }),
             "order": forms.NumberInput(attrs={"class": "form-input", "min": 1}),
+            "countdown_title": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "e.g. HEALTH & FITNESS TARGET, EXAM GOAL",
+            }),
+            "target_date": forms.DateInput(attrs={
+                "class": "form-input",
+                "type": "date",
+            }),
+            "countdown_subtitle": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "e.g. 10kg weight loss goal, Complete 5 subjects",
+            }),
+            "quote": forms.Textarea(attrs={
+                "class": "form-input",
+                "rows": 3,
+                "placeholder": "e.g. Take care of your body. It's the only place you have to live.",
+            }),
             "is_active": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
         }
         labels = {
@@ -29,6 +56,10 @@ class CategoryForm(forms.ModelForm):
             "icon": "Icon (emoji)",
             "color": "Badge Color",
             "order": "Display Order",
+            "countdown_title": "Timer / Countdown Title",
+            "target_date": "Target Date (Timer)",
+            "countdown_subtitle": "Timer Subtitle / Goal Description",
+            "quote": "Motivational Quote for this Category",
             "is_active": "Active (visible in task form & home filter)",
         }
 
