@@ -4,6 +4,35 @@ from django.utils import timezone
 from .models import Category, Task, TaskDateAssignment
 
 
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ["name", "icon", "color", "order", "is_active"]
+        widgets = {
+            "name": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "e.g. Health, Work, Study",
+            }),
+            "icon": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "e.g. 💪 or 📚",
+            }),
+            "color": forms.TextInput(attrs={
+                "class": "form-input",
+                "type": "color",
+            }),
+            "order": forms.NumberInput(attrs={"class": "form-input", "min": 1}),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+        }
+        labels = {
+            "name": "Category Name",
+            "icon": "Icon (emoji)",
+            "color": "Badge Color",
+            "order": "Display Order",
+            "is_active": "Active (visible in task form & home filter)",
+        }
+
+
 
 class TaskForm(forms.ModelForm):
     dates = forms.CharField(
@@ -19,7 +48,7 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ["title", "description", "task_type", "time_slot", "weekday", "category", "order", "is_active"]
+        fields = ["title", "description", "task_type", "weekday", "category", "order", "is_active"]
         widgets = {
             "title": forms.TextInput(attrs={
                 "class": "form-input",
@@ -31,7 +60,6 @@ class TaskForm(forms.ModelForm):
                 "placeholder": "Optional details about this task...",
             }),
             "task_type": forms.Select(attrs={"class": "form-input", "id": "id_task_type"}),
-            "time_slot": forms.Select(attrs={"class": "form-input", "id": "id_time_slot"}),
             "weekday": forms.Select(attrs={"class": "form-input", "id": "id_weekday"}),
             "category": forms.Select(attrs={"class": "form-input", "id": "id_category"}),
             "order": forms.NumberInput(attrs={"class": "form-input", "min": 1}),
@@ -41,7 +69,6 @@ class TaskForm(forms.ModelForm):
             "title": "Task Title",
             "description": "Description (optional)",
             "task_type": "Appears On",
-            "time_slot": "Time Slot / Section",
             "weekday": "Specific Weekday",
             "category": "Category",
             "order": "Display Order",

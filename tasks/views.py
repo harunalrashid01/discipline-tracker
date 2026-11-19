@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import JsonResponse
@@ -6,8 +7,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .forms import TaskForm
+from .forms import CategoryForm, TaskForm
 from .models import (
+    Category,
     Countdown,
     DisciplineSettings,
     Goal,
@@ -159,9 +161,36 @@ def get_streak():
 def home(request):
     """
     Main homepage — shows database-driven countdowns, motivation, and today's tasks.
+    Active category is persisted in the database (synced across all devices).
     """
     today = timezone.localdate()
     day_type = get_day_type(today)
+
+    all_categories = Category.objects.filter(is_active=True).order_by("order", "name")
+    site_settings = DisciplineSettings.get_settings()
+
+    # ── Category filter: save to DB so all devices stay in sync ───
+    if "category_id" in request.GET:
+        raw = request.GET.get("category_id", "")
+        if raw == "all":
+            site_settings.active_category = None
+        else:
+            try:
+                cat_id = int(raw)
+                cat = all_categories.filter(id=cat_id).first()
+                site_settings.active_category = cat  # None if not found
+            except (ValueError, TypeError):
+                site_settings.active_category = None
+        site_settings.save(update_fields=["active_category"])
+        return redirect("home")
+
+    # Read active category from DB
+    selected_category = site_settings.active_category
+    # Guard: if the category was deleted/deactivated, clear it
+    if selected_category and not all_categories.filter(id=selected_category.id).exists():
+        site_settings.active_category = None
+        site_settings.save(update_fields=["active_category"])
+        selected_category = None
 
     active_countdowns = Countdown.objects.filter(is_active=True).order_by("order", "target_date")
     all_countdowns = [c.get_countdown_info(today) for c in active_countdowns]
@@ -171,10 +200,15 @@ def home(request):
 
     quotes = MotivationQuote.objects.filter(is_active=True).order_by("order", "id")
     goals = Goal.objects.filter(is_active=True).order_by("order", "id")
-    site_settings = DisciplineSettings.get_settings()
     streak = get_streak()
 
     pending, completed = get_tasks_for_day(day_type, today)
+
+    # Apply category filter if one is selected
+    if selected_category:
+        pending = [t for t in pending if t.category_id == selected_category.id]
+        completed = [t for t in completed if t.category_id == selected_category.id]
+
     total = len(pending) + len(completed)
     done_count = len(completed)
     progress_pct = int((done_count / total * 100)) if total > 0 else 0
@@ -185,25 +219,10 @@ def home(request):
         "holiday": "SUNDAY",
     }
 
-    current_time_slot = get_current_time_slot()
-    slot_display_names = {
-        "morning": "Morning (5:30 AM – 10:00 AM)",
-        "afternoon": "Afternoon (10:00 AM – 6:00 PM)",
-        "evening": "Evening (6:00 PM – 10:00 PM)",
-    }
-    slot_icons = {
-        "morning": "🌅",
-        "afternoon": "☀️",
-        "evening": "🌙",
-    }
-
     context = {
         "today": today,
         "day_type": day_type,
         "day_label": day_names.get(day_type, ""),
-        "current_time_slot": current_time_slot,
-        "current_slot_icon": slot_icons.get(current_time_slot, "🕒"),
-        "current_time_slot_label": slot_display_names.get(current_time_slot, "Current Time"),
         "pending_tasks": pending,
         "completed_tasks": completed,
         "total": total,
@@ -217,6 +236,8 @@ def home(request):
         "goals": goals,
         "site_settings": site_settings,
         "streak": streak,
+        "all_categories": all_categories,
+        "selected_category": selected_category,
     }
 
     return render(request, "home.html", context)
@@ -343,14 +364,22 @@ def manage_tasks(request):
 def add_task(request):
     """
     Add a new task via a form.
+    Pre-fills category from session if one is selected.
     """
     if request.method == "POST":
         form = TaskForm(request.POST)
         if form.is_valid():
-            form.save()
+            task = form.save()
+            # Persist selected category to session
+            if task.category_id:
+                request.session["selected_category_id"] = task.category_id
             return redirect("manage_tasks")
     else:
         form = TaskForm()
+        # Pre-fill category from session
+        selected_category_id = request.session.get("selected_category_id")
+        if selected_category_id:
+            form.initial["category"] = selected_category_id
 
     return render(request, "task_form.html", {"form": form, "action": "Add"})
 
@@ -385,4 +414,86 @@ def delete_task(request, task_id):
         return redirect("manage_tasks")
 
     return render(request, "delete_task.html", {"task": task})
+
+
+# ─── Category CRUD ───────────────────────────────────────────────────────────
+
+@login_required
+def manage_categories(request):
+    """
+    List all categories with edit / delete options.
+    """
+    categories = Category.objects.all().order_by("order", "name")
+    site_settings = DisciplineSettings.get_settings()
+    return render(request, "manage_categories.html", {
+        "categories": categories,
+        "site_settings": site_settings,
+    })
+
+
+@login_required
+def add_category(request):
+    """
+    Create a new category.
+    """
+    if request.method == "POST":
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Category created successfully.")
+            return redirect("manage_categories")
+    else:
+        form = CategoryForm()
+    site_settings = DisciplineSettings.get_settings()
+    return render(request, "category_form.html", {
+        "form": form,
+        "action": "Add",
+        "site_settings": site_settings,
+    })
+
+
+@login_required
+def edit_category(request, category_id):
+    """
+    Edit an existing category.
+    """
+    category = get_object_or_404(Category, id=category_id)
+    if request.method == "POST":
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Category updated successfully.")
+            return redirect("manage_categories")
+    else:
+        form = CategoryForm(instance=category)
+    site_settings = DisciplineSettings.get_settings()
+    return render(request, "category_form.html", {
+        "form": form,
+        "action": "Edit",
+        "category": category,
+        "site_settings": site_settings,
+    })
+
+
+@login_required
+def delete_category(request, category_id):
+    """
+    Soft-delete (deactivate) a category, or hard-delete if confirmed.
+    """
+    category = get_object_or_404(Category, id=category_id)
+    if request.method == "POST":
+        action = request.POST.get("action", "soft")
+        if action == "hard":
+            category.delete()
+            messages.success(request, f"Category '{category.name}' permanently deleted.")
+        else:
+            category.is_active = False
+            category.save()
+            messages.success(request, f"Category '{category.name}' deactivated (soft deleted).")
+        return redirect("manage_categories")
+    site_settings = DisciplineSettings.get_settings()
+    return render(request, "delete_category.html", {
+        "category": category,
+        "site_settings": site_settings,
+    })
 

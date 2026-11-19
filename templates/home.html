@@ -5,36 +5,25 @@
 
 {% block content %}
 
-<!-- ════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════
      COUNTDOWN SECTION
-════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════════════════ -->
 {% if countdowns %}
 <section class="countdown-section" aria-label="Countdown to goal">
   {% for countdown_item in countdowns %}
   <div class="countdown-card" {% if not forloop.first %}style="margin-top: 1rem;"{% endif %}>
     <p class="countdown-label">{{ countdown_item.title }}</p>
-
     {% if countdown_item.status == "countdown" %}
       <div class="countdown-number">{{ countdown_item.days_remaining }}</div>
-      {% if countdown_item.subtitle %}
-        <p class="countdown-sublabel">{{ countdown_item.subtitle }}</p>
-      {% endif %}
+      {% if countdown_item.subtitle %}<p class="countdown-sublabel">{{ countdown_item.subtitle }}</p>{% endif %}
     {% elif countdown_item.status == "today" %}
       <div class="countdown-number arrived">0</div>
       <p class="countdown-sublabel arrived-text">{{ site_settings.today_is_day_text }}</p>
-      {% if countdown_item.subtitle %}
-        <p class="countdown-sublabel" style="margin-top: 0.5rem;">{{ countdown_item.subtitle }}</p>
-      {% endif %}
     {% else %}
       <div class="countdown-number arrived">✓</div>
       <p class="countdown-sublabel arrived-text">{{ site_settings.day_arrived_text }}</p>
-      {% if countdown_item.subtitle %}
-        <p class="countdown-sublabel" style="margin-top: 0.5rem;">{{ countdown_item.subtitle }}</p>
-      {% endif %}
     {% endif %}
-
     {% if forloop.first %}
-    <!-- Day type badge -->
     <div class="day-badge day-badge--{{ day_type }}">
       {{ today|date:"l, F j, Y" }} &nbsp;·&nbsp; {{ day_label }}
     </div>
@@ -45,7 +34,6 @@
 {% else %}
 <section class="countdown-section" aria-label="Today">
   <div class="countdown-card">
-    <!-- Day type badge -->
     <div class="day-badge day-badge--{{ day_type }}">
       {{ today|date:"l, F j, Y" }} &nbsp;·&nbsp; {{ day_label }}
     </div>
@@ -54,17 +42,14 @@
 {% endif %}
 
 
-<!-- ════════════════════════════════════════════════════
-     MOTIVATIONAL SECTION
-════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════
+     MOTIVATION SECTION
+══════════════════════════════════════════════════════════ -->
 {% if quotes or goals %}
 <section class="motivation-section" aria-label="Motivation">
   {% for quote_item in quotes %}
-  <blockquote class="motivation-quote">
-    "{{ quote_item.quote }}"
-  </blockquote>
+  <blockquote class="motivation-quote">"{{ quote_item.quote }}"</blockquote>
   {% endfor %}
-
   {% if goals %}
   <div class="goals-grid">
     {% for goal_item in goals %}
@@ -82,9 +67,9 @@
 {% endif %}
 
 
-<!-- ════════════════════════════════════════════════════
-     RESOURCE / DOC LINK SECTION
-════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════
+     RESOURCE / DOC LINK
+══════════════════════════════════════════════════════════ -->
 {% if site_settings.doc_url %}
 <section class="resource-section" aria-label="Document Link">
   <a href="{{ site_settings.doc_url }}" target="_blank" rel="noopener noreferrer" class="btn-resource-doc">
@@ -96,15 +81,13 @@
 {% endif %}
 
 
-<!-- ════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════
      PROGRESS BAR
-════════════════════════════════════════════════════ -->
+══════════════════════════════════════════════════════════ -->
 <section class="progress-section" aria-label="Today's progress">
   <div class="progress-header">
     <span class="progress-label">{{ site_settings.progress_label }}</span>
-    <span class="progress-count" id="progress-count">
-      {{ done_count }} / {{ total }} completed
-    </span>
+    <span class="progress-count" id="progress-count">{{ done_count }} / {{ total }} done</span>
   </div>
   <div class="progress-bar-track" role="progressbar" aria-valuenow="{{ progress_pct }}" aria-valuemin="0" aria-valuemax="100">
     <div class="progress-bar-fill" id="progress-bar-fill" style="width: {{ progress_pct }}%;"></div>
@@ -115,32 +98,56 @@
 </section>
 
 
-<!-- ════════════════════════════════════════════════════
-     TIME-SLOT SECTION TABS
-════════════════════════════════════════════════════ -->
-<section class="time-tabs-section" aria-label="Task Time Sections">
-  <div class="time-tabs-bar" role="tablist">
-    <button type="button" class="time-tab-btn active" id="tab-btn-current" data-slot="current" onclick="filterBySlot('current', this)">
-      <span class="tab-icon">{{ current_slot_icon }}</span> <span>{{ current_time_slot_label }}</span> <span class="badge-now">ACTIVE NOW</span>
-    </button>
-    <button type="button" class="time-tab-btn tab-all-tasks" id="tab-btn-all" data-slot="all" onclick="filterBySlot('all', this)">
-      <span class="tab-icon">📋</span> <span>All Tasks (All Sections)</span>
-    </button>
+<!-- ══════════════════════════════════════════════════════════
+     CATEGORY FILTER — PILL TABS (DB-SYNCED)
+══════════════════════════════════════════════════════════ -->
+{% if all_categories %}
+<section class="cat-filter-section" aria-label="Filter by category">
+  <div class="cat-filter-header">
+    <span class="cat-filter-title">📂 Filter by Category</span>
+    <a href="{% url 'manage_categories' %}" class="cat-manage-btn" title="Manage categories">⚙</a>
   </div>
+  <div class="cat-pills-wrap">
+    <!-- All -->
+    <a href="?category_id=all"
+       class="cat-pill {% if not selected_category %}cat-pill--active{% endif %}"
+       title="Show all tasks">
+      🗂 All
+    </a>
+    <!-- Each category -->
+    {% for cat in all_categories %}
+    <a href="?category_id={{ cat.id }}"
+       class="cat-pill {% if selected_category and selected_category.id == cat.id %}cat-pill--active{% endif %}"
+       style="{% if selected_category and selected_category.id == cat.id %}--cat-color: {{ cat.color }};{% endif %}"
+       data-color="{{ cat.color }}"
+       title="{{ cat.name }}">
+      {{ cat.icon }} {{ cat.name }}
+    </a>
+    {% endfor %}
+  </div>
+  {% if selected_category %}
+  <div class="cat-active-info">
+    <span class="cat-active-dot" style="background: {{ selected_category.color }};"></span>
+    Showing <strong>{{ selected_category.icon }} {{ selected_category.name }}</strong> tasks
+    <a href="?category_id=all" class="cat-clear-link">Clear ✕</a>
+  </div>
+  {% endif %}
 </section>
+{% endif %}
 
 
-<!-- ════════════════════════════════════════════════════
-     TASK BOOK / NOTEBOOK SECTION
-════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════
+     TASK BOOK
+══════════════════════════════════════════════════════════ -->
 <section class="book-section" aria-label="Daily tasks">
 
-  <!-- ── Pending Tasks ───────────────────────────── -->
+  <!-- ── Pending Tasks ───────────────────────── -->
   {% if pending_tasks %}
   <div class="tasks-group" id="pending-group">
     <h2 class="tasks-group-heading pending-heading">
       <span class="heading-dot dot-pending"></span>
-      PENDING TASKS
+      PENDING
+      <span class="tasks-count-badge">{{ pending_tasks|length }}</span>
     </h2>
     <div class="task-list" id="pending-list">
       {% for task in pending_tasks %}
@@ -149,28 +156,26 @@
            data-task-id="{{ task.id }}"
            data-time-slot="{{ task.time_slot }}">
         <div class="task-card-inner">
-          <div class="task-number">{{ task.order }}</div>
+          <div class="task-num-wrap">
+            <div class="task-number">{{ task.order }}</div>
+          </div>
           <div class="task-body">
-            <div class="task-title-wrap">
-              <h3 class="task-title">{{ task.title }}</h3>
-              <span class="task-slot-tag task-slot-tag--{{ task.time_slot }}" title="{{ task.get_time_slot_display }}">
-                {{ task.get_time_slot_icon }} {{ task.get_time_slot_short_label }}
-              </span>
-              {% if task.category %}
-              <span class="task-category-tag" style="background:{{ task.category.color }};" title="Category: {{ task.category.name }}">
-                {{ task.category.icon }} {{ task.category.name }}
-              </span>
-              {% endif %}
-            </div>
+            <h3 class="task-title">{{ task.title }}</h3>
             {% if task.description %}
             <p class="task-desc">{{ task.description }}</p>
+            {% endif %}
+            {% if task.category %}
+            <span class="task-cat-pill" style="background: {{ task.category.color }}20; color: {{ task.category.color }}; border-color: {{ task.category.color }}40;">
+              {{ task.category.icon }} {{ task.category.name }}
+            </span>
             {% endif %}
           </div>
           <button class="btn-done"
                   id="done-btn-{{ task.id }}"
                   onclick="completeTask({{ task.id }})"
                   aria-label="Mark task {{ task.order }} as done">
-            ✓ Done
+            <span class="btn-done-icon">✓</span>
+            <span class="btn-done-text">Done</span>
           </button>
         </div>
       </div>
@@ -179,13 +184,13 @@
   </div>
   {% endif %}
 
-
-  <!-- ── Completed Tasks ─────────────────────────── -->
+  <!-- ── Completed Tasks ─────────────────────── -->
   {% if completed_tasks %}
   <div class="tasks-group" id="completed-group">
     <h2 class="tasks-group-heading completed-heading">
       <span class="heading-dot dot-completed"></span>
-      COMPLETED TASKS
+      COMPLETED
+      <span class="tasks-count-badge tasks-count-badge--done">{{ completed_tasks|length }}</span>
     </h2>
     <div class="task-list" id="completed-list">
       {% for task in completed_tasks %}
@@ -194,21 +199,18 @@
            data-task-id="{{ task.id }}"
            data-time-slot="{{ task.time_slot }}">
         <div class="task-card-inner">
-          <div class="task-number completed-num">{{ task.order }}</div>
+          <div class="task-num-wrap">
+            <div class="task-number completed-num">✓</div>
+          </div>
           <div class="task-body">
-            <div class="task-title-wrap">
-              <h3 class="task-title task-title--done">{{ task.title }}</h3>
-              <span class="task-slot-tag task-slot-tag--{{ task.time_slot }}" title="{{ task.get_time_slot_display }}">
-                {{ task.get_time_slot_icon }} {{ task.get_time_slot_short_label }}
-              </span>
-              {% if task.category %}
-              <span class="task-category-tag" style="background:{{ task.category.color }};" title="Category: {{ task.category.name }}">
-                {{ task.category.icon }} {{ task.category.name }}
-              </span>
-              {% endif %}
-            </div>
+            <h3 class="task-title task-title--done">{{ task.title }}</h3>
             {% if task.description %}
             <p class="task-desc task-desc--done">{{ task.description }}</p>
+            {% endif %}
+            {% if task.category %}
+            <span class="task-cat-pill task-cat-pill--done" style="border-color: {{ task.category.color }}30;">
+              {{ task.category.icon }} {{ task.category.name }}
+            </span>
             {% endif %}
           </div>
           <button class="btn-undo"
@@ -224,22 +226,16 @@
   </div>
   {% endif %}
 
-
-  <!-- Slot specific empty state (when filter has no tasks) -->
-  <div class="empty-state empty-slot-state" id="empty-slot-state" style="display: none;">
-    <div class="empty-icon">☕</div>
-    <p id="empty-slot-msg">No tasks scheduled for this section.</p>
-    <button type="button" class="btn-secondary" onclick="filterBySlot('all', document.getElementById('tab-btn-all'))" style="margin-top: 0.5rem;">
-      View All Tasks
-    </button>
-  </div>
-
-  <!-- Overall empty state -->
+  <!-- Empty state -->
   {% if not pending_tasks and not completed_tasks %}
   <div class="empty-state" id="overall-empty-state">
     <div class="empty-icon">📋</div>
-    <p>{{ site_settings.no_tasks_text }}</p>
+    <p>{% if selected_category %}No {{ selected_category.name }} tasks for today.{% else %}{{ site_settings.no_tasks_text }}{% endif %}</p>
+    {% if not selected_category %}
     <a href="{% url 'add_task' %}" class="btn-primary">{{ site_settings.add_task_btn_text }}</a>
+    {% else %}
+    <a href="?category_id=all" class="btn-secondary" style="margin-top:0.75rem; display:inline-block;">Show All Tasks</a>
+    {% endif %}
   </div>
   {% endif %}
 
@@ -250,21 +246,20 @@
     <p class="all-done-text">{{ site_settings.all_done_text }}</p>
   </div>
   {% endif %}
+
 </section>
 
 
-<!-- ════════════════════════════════════════════════════
-     FINAL COUNTDOWN SECTION (BOTTOM MINI CARD)
-════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════
+     FINAL COUNTDOWN (BOTTOM MINI CARD)
+══════════════════════════════════════════════════════════ -->
 {% if final_countdowns %}
   {% for f_item in final_countdowns %}
   <section class="final-countdown-section" aria-label="Final Countdown">
     <div class="final-countdown-card">
       <div class="final-countdown-left">
         <span class="final-countdown-badge">🏁 {{ f_item.title }}</span>
-        {% if f_item.subtitle %}
-        <p class="final-countdown-sub">{{ f_item.subtitle }}</p>
-        {% endif %}
+        {% if f_item.subtitle %}<p class="final-countdown-sub">{{ f_item.subtitle }}</p>{% endif %}
         <span class="final-countdown-target">Target: {{ f_item.target_date|date:"F j, Y" }}</span>
       </div>
       <div class="final-countdown-right">
@@ -289,11 +284,28 @@
 
 {% block extra_js %}
 <script>
-  // Pass CSRF token, URLs, and current active slot to JS
   window.CSRF_TOKEN = "{{ csrf_token }}";
   window.COMPLETE_URL = "{% url 'complete_task' 0 %}".replace("/0/", "/{id}/");
   window.UNDO_URL = "{% url 'undo_task' 0 %}".replace("/0/", "/{id}/");
-  window.CURRENT_TIME_SLOT = "{{ current_time_slot|default:'morning' }}";
+  window.CURRENT_TIME_SLOT = "all";
+
+  // Highlight category pill on hover with its color
+  document.querySelectorAll('.cat-pill[data-color]').forEach(function(pill) {
+    var color = pill.getAttribute('data-color');
+    pill.addEventListener('mouseenter', function() {
+      if (!this.classList.contains('cat-pill--active')) {
+        this.style.background = color + '18';
+        this.style.borderColor = color + '50';
+        this.style.color = color;
+      }
+    });
+    pill.addEventListener('mouseleave', function() {
+      if (!this.classList.contains('cat-pill--active')) {
+        this.style.background = '';
+        this.style.borderColor = '';
+        this.style.color = '';
+      }
+    });
+  });
 </script>
 {% endblock %}
-

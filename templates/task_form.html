@@ -74,6 +74,19 @@
       {% endif %}
     </div>
 
+    <!-- Category Field -->
+    <div class="form-group">
+      <label class="form-label" for="id_category">📂 {{ form.category.label }}</label>
+      {{ form.category }}
+      {% if form.category.errors %}
+        <span class="form-error">{{ form.category.errors.0 }}</span>
+      {% endif %}
+      <small style="display:block; margin-top:4px; color:var(--clr-text-muted); font-size:0.8rem;">
+        Optional — group this task under a category.
+        <a href="{% url 'add_category' %}" target="_blank" style="color:var(--clr-accent);">+ Create new category ↗</a>
+      </small>
+    </div>
+
     <div class="form-check-group">
       {{ form.is_active }}
       <label class="form-check-label" for="id_is_active">{{ form.is_active.label }}</label>

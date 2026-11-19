@@ -361,6 +361,14 @@ class DisciplineSettings(models.Model):
         default="📄 Open Important Notes / Guide",
         help_text="Button text for the doc link",
     )
+    active_category = models.ForeignKey(
+        "Category",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Currently selected category filter shown on the home page (synced across all devices)",
+    )
 
     class Meta:
         verbose_name = "Discipline Settings"

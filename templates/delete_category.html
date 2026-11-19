@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Category — {{ site_settings.site_title|default:"Discipline Tracker" }}{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+  <h1 class="page-title">Delete Category</h1>
+  <a href="{% url 'manage_categories' %}" class="btn-back">← Back to Categories</a>
+</section>
+
+<section class="form-section">
+  <div class="delete-confirm-card">
+    <div class="delete-icon">📂</div>
+    <h2 class="delete-title">
+      <span style="display:inline-block; background: {{ category.color }}; color:#fff; padding:4px 14px; border-radius:20px; font-size:1rem;">
+        {{ category.icon }} {{ category.name }}
+      </span>
+    </h2>
+    <p class="delete-desc">
+      This category has <strong>{{ category.tasks.count }}</strong> task{{ category.tasks.count|pluralize }} linked to it.
+    </p>
+
+    <div class="delete-options">
+      <p style="margin-bottom: 1rem; color: var(--clr-text-muted);">Choose an action:</p>
+
+      <!-- Soft delete -->
+      <form method="post" style="margin-bottom: 0.75rem;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="soft">
+        <button type="submit" class="btn-primary" style="width: 100%;">
+          🔕 Deactivate (Soft Delete) — Hide from task form &amp; filter, keep data
+        </button>
+      </form>
+
+      <!-- Hard delete -->
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="hard">
+        <button type="submit" class="btn-delete" style="width: 100%;"
+          onclick="return confirm('Permanently delete this category? Tasks will lose their category but will NOT be deleted.');">
+          🗑 Permanently Delete — Cannot be undone
+        </button>
+      </form>
+
+      <a href="{% url 'manage_categories' %}" class="btn-cancel" style="display:block; text-align:center; margin-top: 0.75rem;">Cancel</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

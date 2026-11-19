@@ -21,4 +21,11 @@ urlpatterns = [
     path("manage/add/", views.add_task, name="add_task"),
     path("manage/edit/<int:task_id>/", views.edit_task, name="edit_task"),
     path("manage/delete/<int:task_id>/", views.delete_task, name="delete_task"),
+
+    # Category management (CRUD)
+    path("categories/", views.manage_categories, name="manage_categories"),
+    path("categories/add/", views.add_category, name="add_category"),
+    path("categories/edit/<int:category_id>/", views.edit_category, name="edit_category"),
+    path("categories/delete/<int:category_id>/", views.delete_category, name="delete_category"),
 ]
+

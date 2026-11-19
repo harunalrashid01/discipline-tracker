@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Category — {{ site_settings.site_title|default:"Discipline Tracker" }}{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+  <h1 class="page-title">{{ action }} Category</h1>
+  <a href="{% url 'manage_categories' %}" class="btn-back">← Back to Categories</a>
+</section>
+
+<section class="form-section">
+  <form method="post" class="task-form">
+    {% csrf_token %}
+
+    <div class="form-row">
+      <div class="form-group" style="flex: 2;">
+        <label class="form-label" for="id_name">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% if form.name.errors %}<span class="form-error">{{ form.name.errors.0 }}</span>{% endif %}
+      </div>
+      <div class="form-group" style="flex: 1;">
+        <label class="form-label" for="id_icon">{{ form.icon.label }}</label>
+        {{ form.icon }}
+        {% if form.icon.errors %}<span class="form-error">{{ form.icon.errors.0 }}</span>{% endif %}
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="id_color">{{ form.color.label }}</label>
+        {{ form.color }}
+        {% if form.color.errors %}<span class="form-error">{{ form.color.errors.0 }}</span>{% endif %}
+        <small style="color: var(--clr-text-muted); font-size: 0.8rem;">Click to pick a color for the badge</small>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_order">{{ form.order.label }}</label>
+        {{ form.order }}
+        {% if form.order.errors %}<span class="form-error">{{ form.order.errors.0 }}</span>{% endif %}
+      </div>
+    </div>
+
+    <div class="form-check-group">
+      {{ form.is_active }}
+      <label class="form-check-label" for="id_is_active">{{ form.is_active.label }}</label>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary btn-submit">
+        {% if action == "Add" %}Create Category{% else %}Save Changes{% endif %}
+      </button>
+      <a href="{% url 'manage_categories' %}" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</section>
+
+{% endblock %}

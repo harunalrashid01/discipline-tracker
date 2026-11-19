@@ -29,7 +29,8 @@
       <div class="nav-links">
         <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Today</a>
         <a href="{% url 'history' %}" class="nav-link {% if request.resolver_match.url_name == 'history' %}active{% endif %}">History</a>
-        <a href="{% url 'manage_tasks' %}" class="nav-link {% if 'manage' in request.path %}active{% endif %}">Tasks</a>
+        <a href="{% url 'manage_tasks' %}" class="nav-link {% if 'manage' in request.path and 'categor' not in request.path %}active{% endif %}">Tasks</a>
+        <a href="{% url 'manage_categories' %}" class="nav-link {% if 'categor' in request.path %}active{% endif %}">Categories</a>
         {% if site_settings.doc_url %}
         <a href="{{ site_settings.doc_url }}" target="_blank" rel="noopener noreferrer" class="nav-link" title="Open Google Doc / Notes">Notes ↗</a>
         {% endif %}
