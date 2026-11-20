@@ -402,24 +402,45 @@ def manage_tasks(request):
 def add_task(request):
     """
     Add a new task via a form.
-    Pre-fills category from session if one is selected.
+    Pre-fills category from DB active_category and auto-sets order = last order in that category + 1.
     """
+    site_settings = DisciplineSettings.get_settings()
+
     if request.method == "POST":
         form = TaskForm(request.POST)
         if form.is_valid():
             task = form.save()
-            # Persist selected category to session
-            if task.category_id:
-                request.session["selected_category_id"] = task.category_id
             return redirect("manage_tasks")
     else:
         form = TaskForm()
-        # Pre-fill category from session
-        selected_category_id = request.session.get("selected_category_id")
-        if selected_category_id:
-            form.initial["category"] = selected_category_id
+        # Pre-fill category from DB active category
+        active_cat = site_settings.active_category
+        if active_cat:
+            form.initial["category"] = active_cat.pk
+            # Auto-set order = last task order in this category + 1
+            last = Task.objects.filter(category=active_cat).order_by("-order").first()
+            form.initial["order"] = (last.order + 1) if last else 1
+        else:
+            # No category selected — just use global max order + 1
+            last = Task.objects.order_by("-order").first()
+            form.initial["order"] = (last.order + 1) if last else 1
 
-    return render(request, "task_form.html", {"form": form, "action": "Add"})
+    # Build category → next_order mapping for JS dynamic update
+    all_categories = Category.objects.filter(is_active=True)
+    cat_next_orders = {}
+    for cat in all_categories:
+        last = Task.objects.filter(category=cat).order_by("-order").first()
+        cat_next_orders[cat.pk] = (last.order + 1) if last else 1
+    # Also compute "no category" next order
+    global_last = Task.objects.filter(category__isnull=True).order_by("-order").first()
+    cat_next_orders["none"] = (global_last.order + 1) if global_last else 1
+
+    import json
+    return render(request, "task_form.html", {
+        "form": form,
+        "action": "Add",
+        "cat_next_orders_json": json.dumps(cat_next_orders),
+    })
 
 
 @login_required

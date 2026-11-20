@@ -74,35 +74,6 @@
 {% endif %}
 
 
-<!-- ══════════════════════════════════════════════════════════
-     RESOURCE / DOC LINK
-══════════════════════════════════════════════════════════ -->
-{% if site_settings.doc_url %}
-<section class="resource-section" aria-label="Document Link">
-  <a href="{{ site_settings.doc_url }}" target="_blank" rel="noopener noreferrer" class="btn-resource-doc">
-    <span class="resource-doc-icon">📄</span>
-    <span class="resource-doc-text">{{ site_settings.doc_button_text|default:"Open Important Notes / Guide" }}</span>
-    <span class="resource-doc-arrow">↗</span>
-  </a>
-</section>
-{% endif %}
-
-
-<!-- ══════════════════════════════════════════════════════════
-     PROGRESS BAR
-══════════════════════════════════════════════════════════ -->
-<section class="progress-section" aria-label="Today's progress">
-  <div class="progress-header">
-    <span class="progress-label">{{ site_settings.progress_label }}</span>
-    <span class="progress-count" id="progress-count">{{ done_count }} / {{ total }} done</span>
-  </div>
-  <div class="progress-bar-track" role="progressbar" aria-valuenow="{{ progress_pct }}" aria-valuemin="0" aria-valuemax="100">
-    <div class="progress-bar-fill" id="progress-bar-fill" style="width: {{ progress_pct }}%;"></div>
-  </div>
-  {% if streak > 0 %}
-  <div class="streak-badge">🔥 {{ streak }} {{ site_settings.streak_label }}</div>
-  {% endif %}
-</section>
 
 
 <!-- ══════════════════════════════════════════════════════════

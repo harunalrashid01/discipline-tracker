@@ -107,21 +107,21 @@
 <script>
   (function() {
     const taskTypeSelect = document.getElementById("id_task_type");
-    const weekdayGroup = document.getElementById("weekday-group");
-    const datesGroup = document.getElementById("dates-group");
+    const weekdayGroup   = document.getElementById("weekday-group");
+    const datesGroup     = document.getElementById("dates-group");
 
     function updateDynamicFields() {
       if (!taskTypeSelect) return;
       const val = taskTypeSelect.value;
       if (val === "weekday") {
         if (weekdayGroup) weekdayGroup.style.display = "block";
-        if (datesGroup) datesGroup.style.display = "none";
+        if (datesGroup)   datesGroup.style.display   = "none";
       } else if (val === "date") {
-        if (datesGroup) datesGroup.style.display = "block";
+        if (datesGroup)   datesGroup.style.display   = "block";
         if (weekdayGroup) weekdayGroup.style.display = "none";
       } else {
         if (weekdayGroup) weekdayGroup.style.display = "none";
-        if (datesGroup) datesGroup.style.display = "none";
+        if (datesGroup)   datesGroup.style.display   = "none";
       }
     }
 
@@ -129,6 +129,29 @@
       taskTypeSelect.addEventListener("change", updateDynamicFields);
       updateDynamicFields();
     }
+
+    // ── Auto-fill Order based on selected Category (Add mode only) ──
+    {% if cat_next_orders_json %}
+    const catNextOrders = {{ cat_next_orders_json|safe }};
+    const categorySelect = document.getElementById("id_category");
+    const orderInput     = document.getElementById("id_order");
+
+    function updateOrderFromCategory() {
+      if (!categorySelect || !orderInput) return;
+      const val = categorySelect.value;
+      if (val && catNextOrders[val] !== undefined) {
+        orderInput.value = catNextOrders[val];
+      } else {
+        orderInput.value = catNextOrders["none"] || 1;
+      }
+    }
+
+    if (categorySelect) {
+      categorySelect.addEventListener("change", updateOrderFromCategory);
+      // Also run once on load in case a category is pre-selected
+      updateOrderFromCategory();
+    }
+    {% endif %}
   })();
 </script>
 {% endblock %}
